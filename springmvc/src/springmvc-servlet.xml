@@ -32,5 +32,8 @@ http://www.springframework.org/schema/beans/spring-beans.xsd
         <property name="suffix" value=".jsp" />
     </bean>
 <bean id="hello" class="controller.UserController"></bean>
+
+
+
 </beans>
  
