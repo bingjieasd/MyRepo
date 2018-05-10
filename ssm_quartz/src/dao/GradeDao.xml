@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.GradeDao">
+	<cache></cache>
+		<resultMap type="Grade" id="gr">
+			<id property="gradeid" column="gradeid"></id>
+			<result property="gradename" column="gradename"/>
+		</resultMap>
+		<!-- 一对多映射方式1： -->
+		<!-- <resultMap type="Grade" id="gr_two" extends="gr">
+			<collection property="students" javaType="java.util.List" ofType="Student" column="gradeid" >
+				<id property="studentno" column="studentno"></id>
+				<result property="studentname" column="studentname"/>
+				<result property="sex" column="sex"/>
+				<result property="password" column="loginpwd"/>
+			</collection>
+		</resultMap> -->
+		<!-- 一对多映射方式2： -->
+		<resultMap type="Grade" id="gr_two" extends="gr">
+			<collection property="students" javaType="java.util.List" ofType="Student" column="gradeid" resultMap="dao.StudentDao.stu_base">
+			</collection>
+		</resultMap>
+		
+		
+		<!-- 一对多映射方式3： -->
+		<resultMap type="Grade" id="gr_three" extends="gr">
+			<collection property="students" javaType="java.util.List" ofType="Student" column="gradeid" select="dao.StudentDao.findstu_byGid">
+			</collection>
+		</resultMap>
+		
+		<select id="find_grade_byid" parameterType="int" resultType="Grade">
+			SELECT * FROM grade WHERE gradeid=#{gradeid}
+		</select>
+		
+		<select id="findAllgrades" resultMap="gr">
+			SELECT * FROM grade g
+		</select>
+		<select id="findAllgrades2" resultMap="gr_two" useCache="false">
+			SELECT * FROM grade g,student s where g.gradeid=s.gradeid
+		</select>
+		
+</mapper>

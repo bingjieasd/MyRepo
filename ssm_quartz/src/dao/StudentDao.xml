@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.StudentDao">
+
+	<resultMap type="Student" id="stu_base">
+		<id property="studentno" column="studentno"></id>
+		<result property="studentname" column="studentname"/>
+		<result property="sex" column="sex"/>
+		<result property="password" column="loginpwd"/>
+		<result property="borndate" column="borndate"/>
+	</resultMap>
+	
+	<resultMap type="Student" id="stu_base2">
+		<id property="studentno" column="num"></id>
+		<result property="studentname" column="name"/>
+		<result property="sex" column="sex"/>
+		<result property="password" column="pwd"/>
+	</resultMap>
+
+	<!-- 多对一映射方式1： -->
+	<!-- <resultMap type="Student" id="stu">
+		<id property="studentno" column="studentno"></id>
+		<result property="studentname" column="studentname"/>
+		<result property="sex" column="sex"/>
+		<result property="password" column="loginpwd"/>
+		
+		<association property="grade" column="gradeid" javaType="Grade" >
+			<id property="gradeid" column="gradeid"></id>
+			<result property="gradename" column="gradename"/>
+		</association>
+	</resultMap> -->
+	<!-- 多对一映射方式2： -->
+	<resultMap type="Student" id="stu" extends="stu_base">
+		<association property="grade" column="gradeid" javaType="Grade" resultMap="dao.GradeDao.gr">
+		</association>
+	</resultMap>
+	
+	
+	<!-- 多对一映射方式3： -->
+	<resultMap type="Student" id="stu_three" extends="stu_base">
+		<association property="grade" column="gradeid" javaType="Grade" select="dao.GradeDao.find_grade_byid">
+		</association>
+	</resultMap>
+	<select id="find_stu_byid" parameterType="int" resultMap="stu_three">
+		 SELECT * FROM student  WHERE  studentno=#{sno}
+	</select>
+	
+	<select id="find_stu_res" parameterType="int" resultMap="stu_base2">
+		SELECT 
+		  studentno num,
+		  studentname NAME,
+		  loginpwd pwd 
+		FROM
+		  student 
+		WHERE studentno = #{sno} 
+	</select>
+	
+	<select id="findStudentByNameAndPwd" resultMap="stu_three">
+		select * from student where studentname=#{name} and loginpwd=#{pwd}
+	</select>
+	
+	<sql id="base">
+		SELECT * FROM student 
+	</sql>
+	
+	<select id="findStuno_name" parameterType="int" resultMap="stu">
+			SELECT * 
+				FROM student
+				WHERE sex=#{sex}
+	</select>
+
+	<select id="findAllStudents" resultMap="stu_three">
+		SELECT * FROM student
+	</select>
+	<!-- <select id="findStudentBy" parameterType="map" resultMap="stu" flushCache="true">
+		SELECT * FROM student
+			<where>
+				<if test="name!=null and name!=''">
+				 	and studentname like concat(concat('%',#{name}),'%') 
+				</if>
+				<if test="pwd!=null and pwd!=''">
+					and loginpwd=#{pwd} 
+				</if>
+				<if test="fromdate!=null and fromdate!=''">
+					and borndate>#{fromdate}  
+				</if>	
+				<if test="todate!=null and todate!=''">
+					<![CDATA[and borndate<#{todate}  ]]>
+				</if>
+			</where>
+	</select> -->
+	<select id="findStudentBy" parameterType="map" resultMap="stu" flushCache="true">
+		SELECT * FROM student
+			<trim prefix="where" prefixOverrides="AND|OR" suffix="and 1=1" suffixOverrides="and 1=1">
+				<if test="name!=null and name!=''">
+				 	and studentname like concat(concat('%',#{name}),'%') 
+				</if>
+				<if test="pwd!=null and pwd!=''">
+					and loginpwd=#{pwd} 
+				</if>
+				<if test="fromdate!=null and fromdate!=''">
+					and borndate>#{fromdate}  
+				</if>	
+				<if test="todate!=null and todate!=''">
+					<![CDATA[and borndate<#{todate}  ]]>
+				</if>
+			</trim>
+	</select>
+	
+	<select id="findbysex" resultType="Student">
+		select * from student
+		<choose>
+			<when test="ss=='1'">
+				where sex=1
+			</when>
+			<otherwise>
+				where sex=0
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- Integer   -》  int -->
+	<select id="findStudentById" parameterType="int" resultMap="stu">
+		select s.*,g.* from student s,grade g
+		 where s.studentno=#{id} and s.gradeid=g.gradeid
+	</select>
+	<select id="findStudentByName" parameterType="string" resultType="entity.Student">
+		SELECT * FROM student 
+		<if test="name!=null and name!=''">
+			where studentname like concat(concat('%',#{name}),'%')
+		</if>
+	</select>
+	<select id="findCount" resultType="int">
+		select count(1) from student
+	</select>
+	<delete id="deleteById" parameterType="int" >
+		delete  from student where studentno=#{id}
+	</delete>
+	<update id="updatepwd">
+		UPDATE student SET loginpwd=#{pwd} WHERE studentno=#{id}
+	</update>
+	 <update id="update" parameterType="Student">
+		update student 
+		<trim prefix="set" suffixOverrides="," >
+			<if test="studentname!=null and studentname!=''">
+				studentname=#{studentname},
+			</if>
+			<if test="password!=null and password!=''">
+				loginpwd=#{password},
+			</if>
+			<if test="sex!=null">
+				sex=#{sex},
+			</if>
+		</trim>
+		where studentno=#{studentno}
+	</update>
+	<!-- <update id="update" parameterType="Student">
+		update student 
+		<set>
+				studentname=#{studentname},
+				loginpwd=#{password},
+				sex=#{sex},
+		</set>
+		where studentno=#{studentno}
+	</update> -->
+	<insert id="add" parameterType="entity.Student">
+			INSERT INTO student (
+				  studentname,
+				  loginpwd,
+				  gradeid,
+				  sex,
+				  borndate,
+				  phone,
+				  address,
+				  email,
+				  IdentityCard
+				) 
+				VALUES
+				  (#{studentname},#{password},
+				  #{grade.gradeid},#{sex},#{borndate},
+				  #{phone},#{address},#{email},#{identityCard}) 
+	</insert>
+	
+	<select id="findstu_byGid" parameterType="int" resultType="Student">
+		select * from student where gradeid=#{gradeid}
+	</select>
+	
+	<!-- 数组 array.length    集合  list.size -->
+	<select id="findstuBYarray" resultType="Student">
+		select * from student
+		<where>
+			<if test="array.length>0">
+				studentno IN 
+					<foreach collection="array" separator="," open="(" close=")" item="x">
+						#{x}
+					</foreach>
+				
+			</if>
+		</where>
+	</select>
+</mapper>
